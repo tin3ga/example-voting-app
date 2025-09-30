@@ -9,6 +9,7 @@ import logging
 option_a = os.getenv('OPTION_A', "Cats")
 option_b = os.getenv('OPTION_B', "Dogs")
 hostname = socket.gethostname()
+host=os.getenv("REDIS_HOST", "redis")
 
 app = Flask(__name__)
 
@@ -18,7 +19,11 @@ app.logger.setLevel(logging.INFO)
 
 def get_redis():
     if not hasattr(g, 'redis'):
-        g.redis = Redis(host="redis", db=0, socket_timeout=5)
+        try:
+            g.redis = Redis(host=host, db=0, socket_timeout=5)
+            g.redis.ping()
+        except Exception as e:
+            app.logger.error(f"Redis connection failed: {e}")
     return g.redis
 
 @app.route("/", methods=['POST','GET'])
