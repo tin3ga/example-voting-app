@@ -17,8 +17,17 @@ io.on('connection', function (socket) {
   });
 });
 
+
+// Read from environment variables or use defaults
+const PG_USER = process.env.PG_USER || 'postgres';
+const PG_PASSWORD = process.env.PG_PASSWORD || 'postgres';
+const PG_HOST = process.env.PG_HOST || 'db';
+const PG_PORT = process.env.PG_PORT || '5432';
+const PG_DB = process.env.PG_DB || 'postgres';
+
+// Construct the connection string dynamically
 var pool = new Pool({
-  connectionString: 'postgres://postgres:postgres@db/postgres'
+  connectionString: `postgres://${PG_USER}:${PG_PASSWORD}@${PG_HOST}:${PG_PORT}/${PG_DB}`
 });
 
 async.retry(

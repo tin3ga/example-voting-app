@@ -1,32 +1,71 @@
-# base defines a base stage that uses the official python runtime base image
-FROM python:3.11-slim AS base
+ARG VERSION=3.13-slim
 
-# Add curl for healthcheck
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl && \
-    rm -rf /var/lib/apt/lists/*
+FROM python:${VERSION} AS builder
 
-# Set the application directory
-WORKDIR /usr/local/app
+# Install required system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    gcc \
+    build-essential \
+    python3-venv \
+    python3-dev \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install our requirements.txt
-COPY requirements.txt ./requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+RUN curl -sSL https://install.python-poetry.org | python3 -
 
-# dev defines a stage for development, where it'll watch for filesystem changes
-FROM base AS dev
-RUN pip install watchdog
-ENV FLASK_ENV=development
-CMD ["python", "app.py"]
+ENV PATH="/root/.local/bin:$PATH"
 
-# final defines the stage that will bundle the application for production
-FROM base AS final
+RUN poetry config virtualenvs.in-project true
 
-# Copy our code from the current folder to the working directory inside the container
-COPY . .
+WORKDIR /app/vote
 
-# Make port 80 available for links and/or publish
+COPY pyproject.toml poetry.lock ./
+
+RUN poetry install
+
+
+# Development Stage
+FROM python:${VERSION} AS development
+
+LABEL org.opencontainers.image.authors="tin3ga"
+LABEL org.opencontainers.image.description="Container image for https://github.com/tin3ga/example-voting-app vote service"
+
+RUN apt-get update && apt-get install -y curl
+
+WORKDIR /app/vote
+
+COPY --from=builder /app/vote .
+
+ENV PATH="/app/vote/.venv/bin:$PATH"
+
+ENV PYTHONPATH="/app/vote"
+
+COPY . ./
+
 EXPOSE 80
 
-# Define our command to be run when launching the container
+CMD [ "python", "app.py"]
+
+
+# # Development Stage
+FROM python:${VERSION} AS production
+
+LABEL org.opencontainers.image.authors="tin3ga"
+LABEL org.opencontainers.image.description="Container image for https://github.com/tin3ga/example-voting-app vote service"
+
+RUN apt-get update && apt-get install -y curl
+
+WORKDIR /app/vote
+
+COPY --from=builder /app/vote .
+
+ENV PATH="/app/vote/.venv/bin:$PATH"
+
+ENV PYTHONPATH="/app/vote"
+
+COPY . ./
+
+EXPOSE 80
+
 CMD ["gunicorn", "app:app", "-b", "0.0.0.0:80", "--log-file", "-", "--access-logfile", "-", "--workers", "4", "--keep-alive", "0"]

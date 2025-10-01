@@ -1,0 +1,33 @@
+version: "3"
+
+includes:
+  vote:
+    taskfile: ./vote/Taskfile.yml
+    dir: ./vote
+  worker:
+    taskfile: ./worker/Taskfile.yml
+    dir: ./worker
+  result:
+    taskfile: ./result/Taskfile.yml
+    dir: ./result
+  seed-data:
+    taskfile: ./seed-data/Taskfile.yml
+    dir: ./seed-data
+
+
+tasks:
+  docker-compose-up:
+    desc: Run the services using docker compose
+    cmds:
+      - docker compose up
+
+  docker-compose-seed:
+    desc: Run the services using docker compose and seed data profile
+    cmds:
+      - docker compose --profile seed up -d
+
+  docker-compose-down:
+    desc: Remove services using docker compose
+    cmds:
+      - docker compose down 
+

@@ -1,0 +1,84 @@
+name: Run Tests
+
+on:
+  push:
+      branches:
+      - main
+
+  pull_request:
+
+  workflow_dispatch:
+
+jobs:
+  filter:
+    runs-on: ubuntu-24.04
+    outputs:
+      services: ${{ steps.filter.outputs.changes }}
+    steps: 
+      - name: Checkout code
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  #v5.0.0
+      - name: filter
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36  #v3.0.2
+        id: filter
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          filters: .github/utils/file-filters.yml
+
+  run-tests:
+    runs-on: ubuntu-24.04
+    needs: filter
+    if: ${{ needs.filter.outputs.services != '[]' && needs.filter.outputs.services != '' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJson(needs.filter.outputs.services) }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  #v5.0.0
+
+      - name: Install poetry
+        if : ${{ startsWith( matrix.service, 'vote' ) }}
+        uses: snok/install-poetry@76e04a911780d5b312d89783f7b1cd627778900a #v1.4.1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: false
+
+      - name: Setup python environment
+        if : ${{ startsWith( matrix.service, 'vote' ) }}
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c #v6.0.0
+        with:
+          python-version-file: vote/pyproject.toml
+          cache: poetry
+          cache-dependency-path: vote/poetry.lock
+
+      - name: Setup Node environment
+        if : ${{ startsWith( matrix.service, 'result' )}}
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 #v5.0.0
+        with: 
+          node-version-file: result/package.json
+          cache: "npm"
+          cache-dependency-path: result/package-lock.json
+
+      - name: Setup dotnet
+        if : ${{ startsWith( matrix.service, 'worker' ) }}
+        uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d #v5.0.0
+        with:
+          dotnet-version: 9.0
+
+      - name: Install Task
+        uses: supplypike/setup-bin@1fafb085795af4a3f183502f3a9dffa8f7b83217 #v5.0.0
+        with:
+          uri: 'https://github.com/go-task/task/releases/download/v3.45.4/task_linux_amd64.tar.gz'
+          name: 'task'
+          version: 'v3.45.4'  
+
+      - name: Install / Build
+        working-directory: ${{ matrix.service }}
+        run: |
+          task install-ci
+
+      - name: run tests
+        working-directory: ${{ matrix.service }}
+        run: |
+          task test

@@ -1,0 +1,16 @@
+# This file tells paths-filter action which directories represent services
+# and which ones should trigger tests when changed.
+
+
+vote:
+  - "vote/**"
+  - ".github/workflows/test.yml"
+worker:
+  - "worker/**"
+  - ".github/workflows/test.yml"
+result:
+  - "result/**"
+  - ".github/workflows/test.yml"
+seed-data:
+  - "seed-data/**"
+  - ".github/workflows/test.yml"
