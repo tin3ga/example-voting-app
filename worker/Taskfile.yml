@@ -1,0 +1,25 @@
+version: '3'
+
+vars:
+  IMAGE_REPO: tinegagideon/worker
+  IMAGE_TAG: latest
+
+tasks:
+  install-ci:
+    desc: Build app binariers
+    cmds:
+      - dotnet build
+  run:
+    desc: Start worker app
+    cmds:
+      - dotnet run
+      
+  build-container-image:
+    desc: Build container image
+    cmds:
+      - docker build -t {{.IMAGE_REPO}}:{{.IMAGE_TAG}} .
+  
+  test:
+    desc: run tests
+    cmds:
+      - echo "No tests for this service"

@@ -1,0 +1,25 @@
+version: '3'
+
+vars:
+  IMAGE_REPO: tinegagideon/vote
+  IMAGE_TAG: latest
+
+tasks:
+  install-ci:
+    desc: Install dependencies
+    cmds:
+      - poetry install --no-root
+  run:
+    desc: Start vote app
+    cmds:
+      - gunicorn app:app -b 0.0.0.0:8080 --log-file - --access-logfile - --workers 4 --keep-alive 0
+      
+  build-container-image:
+    desc: Build container image - development
+    cmds:
+      - docker build -t {{.IMAGE_REPO}}:{{.IMAGE_TAG}} .
+
+  test:
+    desc: run tests
+    cmds:
+      - poetry run pytest tests/test.py

@@ -1,0 +1,25 @@
+version: '3'
+
+vars:
+  IMAGE_REPO: tinegagideon/result
+  IMAGE_TAG: latest
+
+tasks:
+  install-ci:
+    desc: Install node modules
+    cmds:
+      - npm install
+  run:
+    desc: Start result dashboard
+    cmds:
+      - node server.js
+      
+  build-container-image:
+    desc: Build container image
+    cmds:
+      - docker build -t {{.IMAGE_REPO}}:{{.IMAGE_TAG}} .
+
+  test:
+    desc: run tests
+    cmds:
+      - npm run test
