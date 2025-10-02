@@ -1,7 +1,7 @@
 version: '3'
 
 vars:
-  IMAGE_REPO: tinegagideon/seed
+  IMAGE_REPO: tinegagideon/seed-data
   IMAGE_TAG: latest
 
 includes:
