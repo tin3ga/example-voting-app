@@ -4,6 +4,11 @@ vars:
   IMAGE_REPO: tinegagideon/result
   IMAGE_TAG: latest
 
+includes:
+  utils:
+    taskfile: ../utils/Taskfile.yml
+    dir: ../utils
+
 tasks:
   install-ci:
     desc: Install node modules
