@@ -32,6 +32,10 @@ on:
         required: false
         type: string
 
+permissions:
+  actions: write 
+  contents: read
+
 
 jobs:
   filter:
